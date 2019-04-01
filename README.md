@@ -73,9 +73,18 @@ document and the entire document is used.
 
 After the file reference, syntax matches a subset of the `jq` query language.
 
-Multiple unnamed documents are treated as an array of documents.
+Specifically, UDR is based on this [path syntax](https://github.com/tidwall/gjson#path-syntax),
+prefixed by a file reference.
 
-### 3.1 Examples
+### 3.1 Multiple Documents
+
+When multiple documents are defined in a file, a single document is referred to
+by its position, indexed at 0.
+
+When multiple documents are defined in a file, any UDR referring to that file
+must include a specific document.
+
+### 3.2 Examples
 
 | Snippet | Description |
 |---|---|
