@@ -46,3 +46,13 @@ type KeyNotFoundError struct{
 func (knf KeyNotFoundError) Error() string {
 	return fmt.Sprintf("not found: %s", knf.Key)
 }
+
+type ExpectedArrayError struct{}
+func (ea ExpectedArrayError) Error() string {
+	return "expected array"
+}
+
+type OutOfBoundsError struct{}
+func (oob OutOfBoundsError) Error() string {
+	return "index out of bounds"
+}
