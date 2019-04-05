@@ -1,11 +1,13 @@
 package yt
 
 import (
+	"strconv"
 	"unicode"
 )
 
 const (
 	kindKey int = iota
+	kindIndex
 )
 
 type state int
@@ -13,11 +15,13 @@ const (
 	invalid state = iota
 	start
 	key
+	index
 )
 
 type queryElement struct {
 	kind int
 	key string
+	index int
 }
 
 func Query(v interface{}, query string) (interface{}, error) {
@@ -48,18 +52,30 @@ func lex(query string) ([]queryElement, error) {
 				})
 				s = start
 				token = ""
+			case index:
+				index, err := strconv.ParseInt(token, 10, 0)
+				if err != nil {
+					return nil, err
+				}
+				qe = append(qe, queryElement{
+					kind: kindIndex,
+					index: int(index),
+				})
+				s = start
+				token = ""
 			}
 		case unicode.IsNumber(r):
 			switch s {
 			case invalid:
-				return nil, NotImplementedError{
-					Functionality: "indices",
+				return nil, UnexpectedCharError{
+					Char: r,
 				}
 			case start:
-				return nil, NotImplementedError{
-					Functionality: "indices",
-				}
+				token = string(r)
+				s = index
 			case key:
+				token += string(r)
+			case index:
 				token += string(r)
 			}
 		default:
@@ -73,6 +89,10 @@ func lex(query string) ([]queryElement, error) {
 				s = key
 			case key:
 				token += string(r)
+			case index:
+				return nil, UnexpectedCharError{
+					Char: r,
+				}
 			}
 		}
 	}
@@ -87,6 +107,15 @@ func lex(query string) ([]queryElement, error) {
 			kind: kindKey,
 			key: token,
 		})
+	case index:
+		index, err := strconv.ParseInt(token, 10, 0)
+		if err != nil {
+			return nil, err
+		}
+		qe = append(qe, queryElement{
+			kind: kindIndex,
+			index: int(index),
+		})
 	}
 	return qe, nil
 }
@@ -99,6 +128,11 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 		switch qe.kind {
 		case kindKey:
 			vPart, err = getKey(qe.key, vPart)
+			if err != nil {
+				return nil, err
+			}
+		case kindIndex:
+			vPart, err  = getIndex(qe.index, vPart)
 			if err != nil {
 				return nil, err
 			}
@@ -122,5 +156,17 @@ func getKey(key string, v interface{}) (interface{}, error) {
 			Key: key,
 		}
 	}
+	return value, nil
+}
+
+func getIndex(index int, v interface{}) (interface{}, error) {
+	a, ok := v.([]interface{})
+	if !ok {
+		return nil, ExpectedArrayError{}
+	}
+	if index >= len(a) || index < 0 {
+		return nil, OutOfBoundsError{}
+	}
+	value := a[index]
 	return value, nil
 }
