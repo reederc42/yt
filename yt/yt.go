@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-//as of #3 only returns first document from input
+//only returns first document from input
 func Compile(input io.Reader) (interface{}, error) {
 	var v interface{}
 	err := yaml.NewDecoder(input).Decode(&v)

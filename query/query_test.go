@@ -1,6 +1,7 @@
-package yt
+package query
 
 import (
+	"github.com/reederc42/yt/errors"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 	"testing"
@@ -11,7 +12,7 @@ func TestLex_NoError(t *testing.T) {
 	expectedElements := []queryElement{
 		{
 			kind: kindKey,
-			key: "foo",
+			key:  "foo",
 		},
 	}
 
@@ -25,11 +26,11 @@ func TestLex_TwoElements(t *testing.T) {
 	expectedElements := []queryElement{
 		{
 			kind: kindKey,
-			key: "foo",
+			key:  "foo",
 		},
 		{
 			kind: kindKey,
-			key: "bar",
+			key:  "bar",
 		},
 	}
 
@@ -42,7 +43,7 @@ func TestLex_Index(t *testing.T) {
 	q := ".1"
 	expectedElements := []queryElement{
 		{
-			kind: kindIndex,
+			kind:  kindIndex,
 			index: 1,
 		},
 	}
@@ -55,7 +56,7 @@ func TestLex_Index(t *testing.T) {
 func TestEmptyTokenError(t *testing.T) {
 	q := ".."
 	_, err := lex(q)
-	assert.Equal(t, EmptyTokenError{}, err)
+	assert.Equal(t, errors.EmptyToken{}, err)
 }
 
 func TestExecQuery(t *testing.T) {
@@ -65,7 +66,7 @@ func TestExecQuery(t *testing.T) {
 	qe := []queryElement{
 		{
 			kind: kindKey,
-			key: "foo",
+			key:  "foo",
 		},
 	}
 	v, err := execQuery(m, qe)
@@ -82,11 +83,11 @@ func TestExecQuery_SubObject(t *testing.T) {
 	qe := []queryElement{
 		{
 			kind: kindKey,
-			key: "foo",
+			key:  "foo",
 		},
 		{
 			kind: kindKey,
-			key: "bar",
+			key:  "bar",
 		},
 	}
 
@@ -102,12 +103,12 @@ func TestExecQuery_NotFound(t *testing.T) {
 	qe := []queryElement{
 		{
 			kind: kindKey,
-			key: "foo",
+			key:  "foo",
 		},
 	}
 
 	_, err := execQuery(m, qe)
-	assert.Equal(t, KeyNotFoundError{
+	assert.Equal(t, errors.KeyNotFound{
 		Key: "foo",
 	}, err)
 }

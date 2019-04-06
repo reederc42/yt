@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/reederc42/yt/query"
 	"github.com/reederc42/yt/yt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,17 +14,19 @@ var rootCmd = &cobra.Command{
 	Short: "yt implements inheritance and components in YAML",
 	PreRunE: viperBindFlags,
 	RunE: rootCmdEntry,
+	Args: cobra.MaximumNArgs(1),
 }
 
 func init() {
 	rootCmd.Flags().StringP("input", "i", os.Stdin.Name(), "input file")
 	rootCmd.Flags().StringP("output", "o", os.Stdout.Name(), "output file")
-	rootCmd.Flags().StringP("query", "q", "", "document query")
+	rootCmd.Flags().StringP("query", "q", "",
+		"document query (overwrites argument)")
 	rootCmd.Flags().BoolP("silence-usage", "s", false,
 		"silences usage on error")
 }
 
-func rootCmdEntry(cmd *cobra.Command, _ []string) error {
+func rootCmdEntry(cmd *cobra.Command, args []string) error {
 	if viper.GetBool("silence-usage") {
 		cmd.SilenceUsage = true
 		cmd.SilenceErrors = true
@@ -41,9 +44,15 @@ func rootCmdEntry(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	query := viper.GetString("query")
-	if query != "" {
-		v, err = yt.Query(v, query)
+	var qry string
+	if len(args) > 0 {
+		qry = args[0]
+	}
+	if q := viper.GetString("query"); q != "" {
+		qry = q
+	}
+	if qry != "" {
+		v, err = query.Query(v, qry)
 		if err != nil {
 			return err
 		}
