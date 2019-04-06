@@ -1,6 +1,7 @@
-package yt
+package query
 
 import (
+	"github.com/reederc42/yt/errors"
 	"strconv"
 	"unicode"
 )
@@ -44,7 +45,7 @@ func lex(query string) ([]queryElement, error) {
 			case invalid:
 				s = start
 			case start:
-				return nil, EmptyTokenError{}
+				return nil, errors.EmptyToken{}
 			case key:
 				qe = append(qe, queryElement{
 					kind: kindKey,
@@ -67,7 +68,7 @@ func lex(query string) ([]queryElement, error) {
 		case unicode.IsNumber(r):
 			switch s {
 			case invalid:
-				return nil, UnexpectedCharError{
+				return nil, errors.UnexpectedChar{
 					Char: r,
 				}
 			case start:
@@ -81,7 +82,7 @@ func lex(query string) ([]queryElement, error) {
 		default:
 			switch s {
 			case invalid:
-				return nil, UnexpectedCharError{
+				return nil, errors.UnexpectedChar{
 					Char: r,
 				}
 			case start:
@@ -90,7 +91,7 @@ func lex(query string) ([]queryElement, error) {
 			case key:
 				token += string(r)
 			case index:
-				return nil, UnexpectedCharError{
+				return nil, errors.UnexpectedChar{
 					Char: r,
 				}
 			}
@@ -99,7 +100,7 @@ func lex(query string) ([]queryElement, error) {
 
 	switch s {
 	case invalid:
-		return nil, UnknownError{
+		return nil, errors.Unknown{
 			Message: "invalid query",
 		}
 	case key:
@@ -137,7 +138,7 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 				return nil, err
 			}
 		default:
-			return nil, UnknownError{
+			return nil, errors.Unknown{
 				Message: "invalid query",
 			}
 		}
@@ -148,11 +149,11 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 func getKey(key string, v interface{}) (interface{}, error) {
 	m, ok := v.(map[interface{}]interface{})
 	if !ok {
-		return nil, ExpectedMapError{}
+		return nil, errors.ExpectedMap{}
 	}
 	value, ok := m[key]
 	if !ok {
-		return nil, KeyNotFoundError{
+		return nil, errors.KeyNotFound{
 			Key: key,
 		}
 	}
@@ -162,10 +163,10 @@ func getKey(key string, v interface{}) (interface{}, error) {
 func getIndex(index int, v interface{}) (interface{}, error) {
 	a, ok := v.([]interface{})
 	if !ok {
-		return nil, ExpectedArrayError{}
+		return nil, errors.ExpectedArray{}
 	}
 	if index >= len(a) || index < 0 {
-		return nil, OutOfBoundsError{}
+		return nil, errors.OutOfBounds{}
 	}
 	value := a[index]
 	return value, nil

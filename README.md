@@ -39,6 +39,41 @@ elements of a destination document.
 
 Orthogonal merging enables simple multiple inheritance.
 
+##### 1.1.2.1 Logic
+
+Logical description of orthogonal merge.
+
+Assumes two maps, `left` and `right`
+
+Inputs:
+
+a) `key in left`
+
+b) `left[key] is map`
+
+c) `right[key] is map`
+
+Outputs:
+
+Don't panic: `1`
+
+```bash
+ab  | 00 01 10 11
+----|------------
+c 0 |  1  1  0  0
+  1 |  1  1  0  1
+```
+
+Pseudocode:
+
+```bash
+if (key in left && left[key] is map && right[key] is map) || key not in left:
+  temp := (key in left) left[key] : nil
+  recurse
+else:
+  panic
+```
+
 ### 1.2 Syntax
 
 A document may inherit from any UDR. If there is only one document in the parent
