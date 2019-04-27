@@ -1,4 +1,4 @@
-package merge
+package yt
 
 import (
 	"github.com/reederc42/yt/errors"
@@ -91,4 +91,35 @@ func TestOrthogonalMerge_InputsNotMaps(t *testing.T) {
 	}
 	_, err := OrthogonalMerge(o1, o2)
 	assert.Equal(t, expected, err)
+}
+
+func TestMerge_SingleValue(t *testing.T) {
+	o1 := map[interface{}]interface{}{
+		"key1": "value1",
+	}
+	o2 := "value2"
+	expected := "value2"
+	o3 := Merge(o1, o2)
+	assert.Equal(t, expected, o3)
+}
+
+func TestMerge_Objects(t *testing.T) {
+	o1 := map[interface{}]interface{}{
+		"key1": map[interface{}]interface{}{
+			"key1": "value1",
+		},
+	}
+	o2 := map[interface{}]interface{}{
+		"key1": map[interface{}]interface{}{
+			"key2": "value2",
+		},
+	}
+	expected := map[interface{}]interface{}{
+		"key1": map[interface{}]interface{}{
+			"key1": "value1",
+			"key2": "value2",
+		},
+	}
+	o3 := Merge(o1, o2)
+	assert.Equal(t, expected, o3)
 }

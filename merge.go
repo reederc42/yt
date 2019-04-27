@@ -1,10 +1,22 @@
-package merge
+package yt
 
 import (
 	"fmt"
 	"github.com/reederc42/yt/errors"
 	"strings"
 )
+
+func Merge(l, r interface{}) interface{} {
+	lMap, lOk := l.(map[interface{}]interface{})
+	rMap, rOk := r.(map[interface{}]interface{})
+	if !(lOk && rOk) {
+		return r
+	}
+	for k, v := range rMap {
+		lMap[k] = Merge(lMap[k], v)
+	}
+	return lMap
+}
 
 func OrthogonalMerge(l, r interface{}) (interface{}, error) {
 	return orthogonalMergeHelper(l, r, nil)

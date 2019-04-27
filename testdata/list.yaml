@@ -28,5 +28,5 @@ items:
     selector:
       app: nginx
     ports:
-      - protocol: TCP
-        port: 80
+    - protocol: TCP
+      port: 80
