@@ -1,4 +1,4 @@
-package query
+package yt
 
 import (
 	"github.com/reederc42/yt/errors"
@@ -53,7 +53,51 @@ func TestLex_Index(t *testing.T) {
 	assert.Equal(t, expectedElements, elements)
 }
 
-func TestEmptyTokenError(t *testing.T) {
+func TestLex_File(t *testing.T) {
+	q := "'file.yaml'"
+	expectedElements := []queryElement{
+		{
+			kind: kindFile,
+			file: "file.yaml",
+		},
+	}
+
+	elements, err := lex(q)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedElements, elements)
+
+	q = "file.yaml.foo"
+	expectedElements = []queryElement{
+		{
+			kind: kindFile,
+			file: "file.yaml.foo",
+		},
+	}
+
+	elements, err = lex(q)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedElements, elements)
+}
+
+func TestLex_FileQuery(t *testing.T) {
+	q := "'file.yaml'.foo"
+	expectedElements := []queryElement{
+		{
+			kind: kindFile,
+			file: "file.yaml",
+		},
+		{
+			kind: kindKey,
+			key:  "foo",
+		},
+	}
+
+	elements, err := lex(q)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedElements, elements)
+}
+
+func TestLex_EmptyTokenError(t *testing.T) {
 	q := ".."
 	_, err := lex(q)
 	assert.Equal(t, errors.EmptyToken{}, err)

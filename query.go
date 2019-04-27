@@ -1,28 +1,33 @@
-package query
+package yt
 
 import (
 	"github.com/reederc42/yt/errors"
+	"io/ioutil"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
 const (
 	kindKey int = iota
 	kindIndex
+	kindFile
 )
 
-type state int
+type stateVal int
 const (
-	invalid state = iota
-	start
+	invalid stateVal = iota
+	startElement
 	key
 	index
+	file
 )
 
 type queryElement struct {
 	kind int
 	key string
 	index int
+	file string
 }
 
 func Query(v interface{}, query string) (interface{}, error) {
@@ -35,23 +40,23 @@ func Query(v interface{}, query string) (interface{}, error) {
 }
 
 func lex(query string) ([]queryElement, error) {
-	s := invalid
+	state := invalid
 	var token string
 	qe := make([]queryElement, 0)
 	for _, r := range query {
 		switch {
 		case r == '.':
-			switch s {
+			switch state {
 			case invalid:
-				s = start
-			case start:
+				state = startElement
+			case startElement:
 				return nil, errors.EmptyToken{}
 			case key:
 				qe = append(qe, queryElement{
 					kind: kindKey,
 					key: token,
 				})
-				s = start
+				state = startElement
 				token = ""
 			case index:
 				index, err := strconv.ParseInt(token, 10, 0)
@@ -62,46 +67,72 @@ func lex(query string) ([]queryElement, error) {
 					kind: kindIndex,
 					index: int(index),
 				})
-				s = start
+				state = startElement
 				token = ""
+			case file:
+				token += string(r)
 			}
 		case unicode.IsNumber(r):
-			switch s {
+			switch state {
 			case invalid:
-				return nil, errors.UnexpectedChar{
-					Char: r,
-				}
-			case start:
+				token += string(r)
+				state = file
+			case startElement:
 				token = string(r)
-				s = index
+				state = index
 			case key:
 				token += string(r)
 			case index:
+				token += string(r)
+			case file:
 				token += string(r)
 			}
-		default:
-			switch s {
+		case r == '\'' || r == '"':
+			switch state {
 			case invalid:
-				return nil, errors.UnexpectedChar{
-					Char: r,
+				token += string(r)
+				state = file
+			case startElement:
+				fallthrough
+			case key:
+				fallthrough
+			case index:
+				return nil, errors.UnexpectedRune{
+					Rune: r,
 				}
-			case start:
+			case file:
+				fileName := strings.TrimLeft(strings.TrimRight(token, `'"`), `'"`)
+				qe = append(qe, queryElement{
+					kind: kindFile,
+					file: fileName,
+				})
+				state = invalid
+				token = ""
+			}
+		default:
+			switch state {
+			case invalid:
+				token += string(r)
+				state = file
+			case startElement:
 				token = string(r)
-				s = key
+				state = key
 			case key:
 				token += string(r)
 			case index:
-				return nil, errors.UnexpectedChar{
-					Char: r,
+				return nil, errors.UnexpectedRune{
+					Rune: r,
 				}
+			case file:
+				token += string(r)
 			}
 		}
 	}
 
-	switch s {
+	switch state {
 	case invalid:
-		return nil, errors.Unknown{
-			Message: "invalid query",
+		if len(qe) == 0 {
+			return nil, errors.InvalidQuery{}
 		}
 	case key:
 		qe = append(qe, queryElement{
@@ -117,15 +148,22 @@ func lex(query string) ([]queryElement, error) {
 			kind: kindIndex,
 			index: int(index),
 		})
+	case file:
+		fileName := strings.TrimLeft(strings.TrimRight(token, `'"`), `'"`)
+		qe = append(qe, queryElement{
+			kind: kindFile,
+			file: fileName,
+		})
 	}
 	return qe, nil
 }
 
-//parsing is implied by query elements
+//Parsing is implied by query elements. If the first query element is a file,
+// the value of v is ignored.
 func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 	vPart := v
 	var err error
-	for _, qe := range query {
+	for i, qe := range query {
 		switch qe.kind {
 		case kindKey:
 			vPart, err = getKey(qe.key, vPart)
@@ -133,14 +171,21 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 				return nil, err
 			}
 		case kindIndex:
-			vPart, err  = getIndex(qe.index, vPart)
+			vPart, err = getIndex(qe.index, vPart)
 			if err != nil {
 				return nil, err
 			}
-		default:
-			return nil, errors.Unknown{
-				Message: "invalid query",
+		case kindFile:
+			if i > 0 {
+				return nil, errors.InvalidQuery{}
 			}
+			f, fileError := ioutil.ReadFile(qe.file)
+			if fileError != nil {
+				return nil, fileError
+			}
+			vPart, err = Compile(f)
+		default:
+			return nil, errors.InvalidQuery{}
 		}
 	}
 	return vPart, nil

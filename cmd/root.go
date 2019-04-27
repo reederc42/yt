@@ -1,12 +1,13 @@
 package cmd
 
 import (
-	"github.com/reederc42/yt/query"
-	"github.com/reederc42/yt/yt"
+	"github.com/reederc42/yt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 var rootCmd = &cobra.Command{
@@ -24,6 +25,7 @@ func init() {
 		"document query (overwrites argument)")
 	rootCmd.Flags().BoolP("silence-usage", "s", false,
 		"silences usage on error")
+	rootCmd.Flags().BoolP("json", "j", false, "output as JSON")
 }
 
 func rootCmdEntry(cmd *cobra.Command, args []string) error {
@@ -32,7 +34,7 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 		cmd.SilenceErrors = true
 	}
 
-	i, err := getInput(viper.GetString("input"))
+	i, d, err := getInput(viper.GetString("input"))
 	if err != nil {
 		return err
 	}
@@ -40,7 +42,13 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	v, err := yt.Compile(i)
+	writeDir, _ := os.Getwd()
+	_ = os.Chdir(d)
+	iValue, err := ioutil.ReadAll(i)
+	if err != nil {
+		return err
+	}
+	v, err := yt.Compile(iValue)
 	if err != nil {
 		return err
 	}
@@ -52,12 +60,17 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 		qry = q
 	}
 	if qry != "" {
-		v, err = query.Query(v, qry)
+		v, err = yt.Query(v, qry)
 		if err != nil {
 			return err
 		}
 	}
-	err = yt.Write(v, o)
+	_ = os.Chdir(writeDir)
+	if !viper.GetBool("json") {
+		err = yt.WriteYAML(v, o)
+	} else {
+		err = yt.WriteJSON(v, o)
+	}
 	return err
 }
 
@@ -72,12 +85,14 @@ func viperBindFlags(cmd *cobra.Command, _ []string) error {
 	return viper.BindPFlags(cmd.Flags())
 }
 
-func getInput(input string) (io.Reader, error) {
+func getInput(input string) (io.Reader, string, error) {
 	if input == os.Stdin.Name() {
-		return os.Stdin, nil
+		return os.Stdin, "", nil
 	}
 
-	return os.Open(input)
+	i, err := os.Open(input)
+	dir := filepath.Dir(input)
+	return i, dir, err
 }
 
 func getOutput(output string) (io.Writer, error) {

@@ -18,14 +18,14 @@ type InvalidEscapeChar struct {
 	Rune rune
 }
 func (ie InvalidEscapeChar) Error() string {
-	return fmt.Sprintf("invalid escape character %v", ie.Rune)
+	return fmt.Sprintf("invalid escape character: %v", ie.Rune)
 }
 
-type UnexpectedChar struct {
-	Char rune
+type UnexpectedRune struct {
+	Rune rune
 }
-func (uc UnexpectedChar) Error() string {
-	return fmt.Sprintf("unexpected character %v", uc.Char)
+func (uc UnexpectedRune) Error() string {
+	return fmt.Sprintf("unexpected rune: %s", string(uc.Rune))
 }
 
 type Unknown struct {
@@ -62,4 +62,9 @@ type KeyAlreadyDefined struct{
 }
 func (kc KeyAlreadyDefined) Error() string {
 	return fmt.Sprintf("key already defined: %s", kc.Key)
+}
+
+type InvalidQuery struct{}
+func (iq InvalidQuery) Error() string {
+	return "invalid query"
 }

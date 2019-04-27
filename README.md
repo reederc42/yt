@@ -102,9 +102,10 @@ Components help break problems that occur with multiple inheritance.
 
 UDR may refer to any document from any source.
 
-The first element is the source document. It can be a http URI. It must be
+The first element may be the source document. It can be a http URI. It must be
 wrapped in single `'` or double `"` quotes, unless the file contains a single
-document and the entire document is used.
+document and the entire document is used; i.e., if the UDR does not start with 
+`'`, `"`, or `.`, the entire string is considered to be the name of a file. 
 
 After the file reference, syntax matches a subset of the `jq` query language.
 
@@ -127,3 +128,18 @@ must include a specific document.
 | `#& .` | Disallowed: attempts to set the key as the entire current document, a loop |
 | `#& '.'.foo` | Refers to the document named 'foo' in the current file |
 | `#& .foo` | Refers to the element 'foo' in the current document |
+
+### 3.3 Octothorpe-Ampersand
+
+The octothorpe-ampersand (or pound-sand) is a valid comment in YAML 1.2. With 
+`yt`, its use is extended to mean the definition of a parent or query.
+
+## 4 Building
+
+### 4.1 Testing
+
+From project root, run `go test ./...`
+
+### 4.2 Installation
+
+`go get github.com/reederc42/yt/cmd/yt`
