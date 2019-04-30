@@ -9,7 +9,7 @@ import (
 	ghodss "github.com/ghodss/yaml"
 )
 
-const inheritsRERaw = "#&inherits (.*)"
+const inheritsRERaw = "^#&inherits (.*)"
 var inheritsRE *regexp.Regexp
 
 func init() {
@@ -30,7 +30,7 @@ func Compile(input []byte) (interface{}, error) {
 		for _, parent := range parents {
 			p, queryErr := Query(nil, parent)
 			if queryErr != nil {
-				return nil, err
+				return nil, queryErr
 			}
 			v, err = OrthogonalMerge(v, p)
 			if err != nil {

@@ -77,7 +77,12 @@ else:
 ### 1.2 Syntax
 
 A document may inherit from any UDR. If there is only one document in the parent
-file, and the entire file is inherited, the quotes may be elided. 
+file, and the entire file is inherited, the quotes may be elided.
+
+The input is processed line-by-line. Each parent is found by matching this regex 
+to each line: `^#&inherits (.*)`
+
+Adding another `#` will disable the inheritance: `##&inherits`
 
 ### 1.2.1 Example
 
