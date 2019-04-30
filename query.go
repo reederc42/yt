@@ -184,11 +184,14 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 				return nil, fileError
 			}
 			vPart, err = Compile(f)
+			if err != nil {
+				return nil, err
+			}
 		default:
 			return nil, errors.InvalidQuery{}
 		}
 	}
-	return vPart, nil
+	return vPart, err
 }
 
 func getKey(key string, v interface{}) (interface{}, error) {
