@@ -12,7 +12,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use: "yt",
+	Use: "yt [query]",
 	Short: "yt implements inheritance and components in YAML",
 	RunE: rootCmdEntry,
 	//Args is the first function run after parsing flags
@@ -35,7 +35,7 @@ func init() {
 	rootCmd.Flags().StringP("input", "i", os.Stdin.Name(), "input file")
 	rootCmd.Flags().StringP("output", "o", os.Stdout.Name(), "output file")
 	rootCmd.Flags().StringP("query", "q", "",
-		"document query (overwrites argument)")
+		"document query (overwrites query argument)")
 	rootCmd.Flags().BoolP("silence-usage", "s", false,
 		"silences usage on error")
 	rootCmd.Flags().BoolP("json", "j", false, "output as JSON")
