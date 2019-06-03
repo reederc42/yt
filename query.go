@@ -1,20 +1,23 @@
 package yt
 
 import (
-	"github.com/reederc42/yt/errors"
 	"io/ioutil"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/reederc42/yt/errors"
 )
 
 const (
 	kindKey int = iota
 	kindIndex
 	kindFile
+	kindValue
 )
 
 type stateVal int
+
 const (
 	invalid stateVal = iota
 	startElement
@@ -24,10 +27,10 @@ const (
 )
 
 type queryElement struct {
-	kind int
-	key string
+	kind  int
+	key   string
 	index int
-	file string
+	file  string
 }
 
 func Query(v interface{}, query string) (interface{}, error) {
@@ -37,6 +40,15 @@ func Query(v interface{}, query string) (interface{}, error) {
 	}
 	value, err := execQuery(v, elements)
 	return value, err
+}
+
+func Insert(src, value interface{}, query string) (interface{}, error) {
+	elements, err := lex(query)
+	if err != nil {
+		return nil, err
+	}
+	v, err := insertQuery(src, value, elements)
+	return v, err
 }
 
 func lex(query string) ([]queryElement, error) {
@@ -54,7 +66,7 @@ func lex(query string) ([]queryElement, error) {
 			case key:
 				qe = append(qe, queryElement{
 					kind: kindKey,
-					key: token,
+					key:  token,
 				})
 				state = startElement
 				token = ""
@@ -64,7 +76,7 @@ func lex(query string) ([]queryElement, error) {
 					return nil, err
 				}
 				qe = append(qe, queryElement{
-					kind: kindIndex,
+					kind:  kindIndex,
 					index: int(index),
 				})
 				state = startElement
@@ -137,7 +149,7 @@ func lex(query string) ([]queryElement, error) {
 	case key:
 		qe = append(qe, queryElement{
 			kind: kindKey,
-			key: token,
+			key:  token,
 		})
 	case index:
 		index, err := strconv.ParseInt(token, 10, 0)
@@ -145,7 +157,7 @@ func lex(query string) ([]queryElement, error) {
 			return nil, err
 		}
 		qe = append(qe, queryElement{
-			kind: kindIndex,
+			kind:  kindIndex,
 			index: int(index),
 		})
 	case file:
@@ -191,7 +203,7 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 			return nil, errors.InvalidQuery{}
 		}
 	}
-	return vPart, err
+	return vPart, nil
 }
 
 func getKey(key string, v interface{}) (interface{}, error) {
@@ -218,4 +230,34 @@ func getIndex(index int, v interface{}) (interface{}, error) {
 	}
 	value := a[index]
 	return value, nil
+}
+
+//Recursive insert; does not support file kinds
+func insertQuery(src, insert interface{}, qe []queryElement) (interface{}, error) {
+	if len(qe) == 0 {
+		return insert, nil
+	}
+	var err error
+	q := qe[0]
+	switch q.kind {
+	case kindKey:
+		m, ok := src.(map[interface{}]interface{})
+		if !ok {
+			return nil, errors.ExpectedMap{}
+		}
+		m[q.key], err = insertQuery(m[q.key], insert, qe[1:])
+		return m, err
+	case kindIndex:
+		a, ok := src.([]interface{})
+		if !ok {
+			return nil, errors.ExpectedArray{}
+		}
+		if q.index < 0 || q.index >= len(a) {
+			return nil, errors.OutOfBounds{}
+		}
+		a[q.index], err = insertQuery(a[q.index], insert, qe[1:])
+		return a, err
+	default:
+		return nil, errors.Unknown{Message: "insert query: bad kind"}
+	}
 }

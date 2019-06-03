@@ -1,20 +1,21 @@
 package cmd
 
 import (
-	"github.com/reederc42/yt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/reederc42/yt"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 var rootCmd = &cobra.Command{
-	Use: "yt [query]",
+	Use:   "yt [query]",
 	Short: "yt implements inheritance and components in YAML",
-	RunE: rootCmdEntry,
+	RunE:  rootCmdEntry,
 	//Args is the first function run after parsing flags
 	//  before this, cobra.OnInitialize(y ...func()) is called
 	//  because this command requires arguments, flags are bound to viper here
@@ -32,14 +33,16 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().StringP("input", "i", os.Stdin.Name(), "input file")
+	rootCmd.Flags().StringP("input", "f", os.Stdin.Name(), "input file")
+	rootCmd.Flags().StringP("insert", "i", "", "insert value: sets [query] as"+
+		" value (YAML string)")
+	rootCmd.Flags().BoolP("json", "j", false, "output as JSON")
+	rootCmd.Flags().BoolP("no-compile", "n", false, "do not compile input")
 	rootCmd.Flags().StringP("output", "o", os.Stdout.Name(), "output file")
 	rootCmd.Flags().StringP("query", "q", "",
 		"document query (overwrites query argument)")
 	rootCmd.Flags().BoolP("silence-usage", "s", false,
 		"silences usage on error")
-	rootCmd.Flags().BoolP("json", "j", false, "output as JSON")
-	rootCmd.Flags().BoolP("no-compile", "n", false, "do not compile input")
 }
 
 func rootCmdEntry(cmd *cobra.Command, args []string) error {
@@ -81,7 +84,18 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 	if q := viper.GetString("query"); q != "" {
 		qry = q
 	}
-	if qry != "" {
+	insertRaw := viper.GetString("insert")
+	if insertRaw != "" {
+		var insertObj interface{}
+		err = yaml.Unmarshal([]byte(insertRaw), &insertObj)
+		if err != nil {
+			return err
+		}
+		documentValue, err = yt.Insert(documentValue, insertObj, qry)
+		if err != nil {
+			return err
+		}
+	} else if qry != "" {
 		documentValue, err = yt.Query(documentValue, qry)
 		if err != nil {
 			return err

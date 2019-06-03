@@ -5,7 +5,7 @@ files that adds inheritance and components to YAML.
 
 The intent is to make complicated configuration clearer and more maintainable.
 
-In tools such as helm, multiple configuration documents are provided in order.\
+In tools such as helm, multiple configuration documents are provided in order.
 The leftmost is overridden by the rightmost. This pattern is only enforced by
 convention, and can make complex configurations less clear to debug.
 
