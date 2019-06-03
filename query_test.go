@@ -1,10 +1,11 @@
 package yt
 
 import (
+	"testing"
+
 	"github.com/reederc42/yt/errors"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
-	"testing"
 )
 
 func TestLex_NoError(t *testing.T) {
@@ -15,7 +16,6 @@ func TestLex_NoError(t *testing.T) {
 			key:  "foo",
 		},
 	}
-
 	elements, err := lex(q)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedElements, elements)
@@ -33,7 +33,6 @@ func TestLex_TwoElements(t *testing.T) {
 			key:  "bar",
 		},
 	}
-
 	elements, err := lex(q)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedElements, elements)
@@ -47,7 +46,6 @@ func TestLex_Index(t *testing.T) {
 			index: 1,
 		},
 	}
-
 	elements, err := lex(q)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedElements, elements)
@@ -61,11 +59,9 @@ func TestLex_File(t *testing.T) {
 			file: "file.yaml",
 		},
 	}
-
 	elements, err := lex(q)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedElements, elements)
-
 	q = "file.yaml.foo"
 	expectedElements = []queryElement{
 		{
@@ -73,7 +69,6 @@ func TestLex_File(t *testing.T) {
 			file: "file.yaml.foo",
 		},
 	}
-
 	elements, err = lex(q)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedElements, elements)
@@ -91,7 +86,6 @@ func TestLex_FileQuery(t *testing.T) {
 			key:  "foo",
 		},
 	}
-
 	elements, err := lex(q)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedElements, elements)
@@ -134,7 +128,6 @@ func TestExecQuery_SubObject(t *testing.T) {
 			key:  "bar",
 		},
 	}
-
 	v, err := execQuery(m, qe)
 	assert.NoError(t, err)
 	assert.Equal(t, "value", v)
@@ -150,11 +143,58 @@ func TestExecQuery_NotFound(t *testing.T) {
 			key:  "foo",
 		},
 	}
-
 	_, err := execQuery(m, qe)
 	assert.Equal(t, errors.KeyNotFound{
 		Key: "foo",
 	}, err)
+}
+
+func TestExecQuery_InsertKey(t *testing.T) {
+	m := map[interface{}]interface{}{
+		"bar": map[interface{}]interface{}{
+			"baz": "value",
+		},
+	}
+	insert := "value1"
+	qe := []queryElement{
+		{
+			kind: kindKey,
+			key:  "bar",
+		},
+		{
+			kind: kindKey,
+			key:  "baz",
+		},
+	}
+	expected := map[interface{}]interface{}{
+		"bar": map[interface{}]interface{}{
+			"baz": "value1",
+		},
+	}
+	v, err := insertQuery(m, insert, qe)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, v)
+}
+
+func TestExecQuery_InsertIndex(t *testing.T) {
+	m := []interface{}{
+		"value0",
+		"value1",
+	}
+	insert := "value2"
+	qe := []queryElement{
+		{
+			kind:  kindIndex,
+			index: 0,
+		},
+	}
+	expected := []interface{}{
+		"value2",
+		"value1",
+	}
+	v, err := insertQuery(m, insert, qe)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, v)
 }
 
 func TestGetKey(t *testing.T) {
