@@ -148,3 +148,9 @@ From project root, run `go test ./...`
 ### 4.2 Installation
 
 `go get github.com/reederc42/yt/cmd/yt`
+
+## 5 Queries & Inserts
+
+The `query` option identifies an element of the provided document.
+
+If `insert` is defined, the identified element (if it exists) is replaed by the value of insert.
