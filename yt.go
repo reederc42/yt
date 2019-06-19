@@ -4,6 +4,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"text/template"
 
 	"gopkg.in/yaml.v2"
 
@@ -61,6 +62,12 @@ func WriteJSON(v interface{}, output io.Writer) error {
 		return err
 	}
 	_, err = output.Write(rawJSON)
+	return err
+}
+
+func WriteTemplate(v interface{}, tpl *template.Template,
+	output io.Writer) error {
+	err := tpl.Execute(output, v)
 	return err
 }
 
