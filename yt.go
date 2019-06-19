@@ -1,26 +1,28 @@
 package yt
 
 import (
-	"gopkg.in/yaml.v2"
 	"io"
 	"regexp"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	ghodss "github.com/ghodss/yaml"
 )
 
 const inheritsRERaw = "^#&inherits (.*)"
+
 var inheritsRE *regexp.Regexp
 
 func init() {
 	inheritsRE = regexp.MustCompile(inheritsRERaw)
 }
 
-//only one document shall be in file
-func Compile(input []byte) (interface{}, error) {
+//Compile compiles yt documents
+func Compile(input []byte, visited map[string]bool) (interface{}, error) {
 	var (
 		err error
-		v interface{}
+		v   interface{}
 	)
 	parents := getParents(input)
 	if len(parents) == 0 {
@@ -28,7 +30,7 @@ func Compile(input []byte) (interface{}, error) {
 	} else {
 		v = map[interface{}]interface{}{}
 		for _, parent := range parents {
-			p, queryErr := Query(nil, parent)
+			p, queryErr := Query(nil, parent, visited)
 			if queryErr != nil {
 				return nil, queryErr
 			}

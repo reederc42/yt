@@ -33,12 +33,13 @@ type queryElement struct {
 	file  string
 }
 
-func Query(v interface{}, query string) (interface{}, error) {
+func Query(v interface{}, query string,
+	visited map[string]bool) (interface{}, error) {
 	elements, err := lex(query)
 	if err != nil {
 		return nil, err
 	}
-	value, err := execQuery(v, elements)
+	value, err := execQuery(v, elements, visited)
 	return value, err
 }
 
@@ -93,9 +94,9 @@ func lex(query string) ([]queryElement, error) {
 				token = string(r)
 				state = index
 			case key:
-				token += string(r)
+				fallthrough
 			case index:
-				token += string(r)
+				fallthrough
 			case file:
 				token += string(r)
 			}
@@ -113,7 +114,8 @@ func lex(query string) ([]queryElement, error) {
 					Rune: r,
 				}
 			case file:
-				fileName := strings.TrimLeft(strings.TrimRight(token, `'"`), `'"`)
+				fileName := strings.TrimLeft(strings.TrimRight(token, `'"`),
+					`'"`)
 				qe = append(qe, queryElement{
 					kind: kindFile,
 					file: fileName,
@@ -172,7 +174,8 @@ func lex(query string) ([]queryElement, error) {
 
 //Parsing is implied by query elements. If the first query element is a file,
 // the value of v is ignored.
-func execQuery(v interface{}, query []queryElement) (interface{}, error) {
+func execQuery(v interface{}, query []queryElement,
+	visited map[string]bool) (interface{}, error) {
 	vPart := v
 	var err error
 	for i, qe := range query {
@@ -188,6 +191,10 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 				return nil, err
 			}
 		case kindFile:
+			if _, ok := visited[qe.file]; ok {
+				return nil, errors.CycleDetected{Source: qe.file}
+			}
+			visited[qe.file] = true
 			if i > 0 {
 				return nil, errors.InvalidQuery{}
 			}
@@ -195,7 +202,7 @@ func execQuery(v interface{}, query []queryElement) (interface{}, error) {
 			if fileError != nil {
 				return nil, fileError
 			}
-			vPart, err = Compile(f)
+			vPart, err = Compile(f, visited)
 			if err != nil {
 				return nil, err
 			}

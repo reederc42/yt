@@ -1,7 +1,10 @@
 package yt
 
 import (
+	"io/ioutil"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/reederc42/yt/errors"
 	"github.com/stretchr/testify/assert"
@@ -107,7 +110,7 @@ func TestExecQuery(t *testing.T) {
 			key:  "foo",
 		},
 	}
-	v, err := execQuery(m, qe)
+	v, err := execQuery(m, qe, map[string]bool{})
 	assert.NoError(t, err)
 	assert.Equal(t, "value", v)
 }
@@ -128,7 +131,7 @@ func TestExecQuery_SubObject(t *testing.T) {
 			key:  "bar",
 		},
 	}
-	v, err := execQuery(m, qe)
+	v, err := execQuery(m, qe, map[string]bool{})
 	assert.NoError(t, err)
 	assert.Equal(t, "value", v)
 }
@@ -143,7 +146,7 @@ func TestExecQuery_NotFound(t *testing.T) {
 			key:  "foo",
 		},
 	}
-	_, err := execQuery(m, qe)
+	_, err := execQuery(m, qe, map[string]bool{})
 	assert.Equal(t, errors.KeyNotFound{
 		Key: "foo",
 	}, err)
@@ -217,4 +220,22 @@ func TestGetIndex(t *testing.T) {
 	v, err := getIndex(0, i)
 	assert.NoError(t, err)
 	assert.Equal(t, "value0", v)
+}
+
+func TestDetectCycle(t *testing.T) {
+	_ = os.Chdir("testdata")
+	cycle2, err := ioutil.ReadFile("cycle1.yaml")
+	assert.NoError(t, err)
+	expectedError := errors.CycleDetected{Source: "cycle2.yaml"}
+	c := make(chan error, 1)
+	go func(input []byte) {
+		_, err := Compile(input, map[string]bool{})
+		c <- err
+	}(cycle2)
+	select {
+	case compileErr := <-c:
+		assert.Equal(t, expectedError, compileErr)
+	case <-time.After(2 * time.Second):
+		assert.Fail(t, "cycle undetected after 2 seconds")
+	}
 }
