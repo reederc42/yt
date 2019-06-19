@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/reederc42/yt"
 	"github.com/spf13/cobra"
@@ -43,6 +44,8 @@ func init() {
 		"document query (overwrites query argument)")
 	rootCmd.Flags().BoolP("silence-usage", "s", false,
 		"silences usage on error")
+	rootCmd.Flags().StringP("template", "t", "", "outputs template processed "+
+		"with yt document")
 }
 
 func rootCmdEntry(cmd *cobra.Command, args []string) error {
@@ -102,10 +105,19 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 		}
 	}
 	_ = os.Chdir(writeDir)
-	if !viper.GetBool("json") {
-		err = yt.WriteYAML(documentValue, o)
+	if tplFile := viper.GetString("template"); tplFile == "" {
+		if !viper.GetBool("json") {
+			err = yt.WriteYAML(documentValue, o)
+		} else {
+			err = yt.WriteJSON(documentValue, o)
+		}
 	} else {
-		err = yt.WriteJSON(documentValue, o)
+		tplRaw, err := ioutil.ReadFile(tplFile)
+		if err != nil {
+			return err
+		}
+		tpl := template.Must(template.New("").Parse(string(tplRaw)))
+		err = yt.WriteTemplate(documentValue, tpl, o)
 	}
 	return err
 }
@@ -125,7 +137,6 @@ func getInput(input string) (io.Reader, string, error) {
 	if input == os.Stdin.Name() {
 		return os.Stdin, "", nil
 	}
-
 	i, err := os.Open(input)
 	dir := filepath.Dir(input)
 	return i, dir, err
@@ -135,7 +146,6 @@ func getOutput(output string) (io.Writer, error) {
 	if output == os.Stdout.Name() {
 		return os.Stdout, nil
 	}
-
 	return os.Create(output)
 }
 
