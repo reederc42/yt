@@ -1,0 +1,4 @@
+#&inherits "cycle1.yaml"
+
+key1:
+  subkey1: value

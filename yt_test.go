@@ -1,10 +1,11 @@
 package yt
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetParents(t *testing.T) {
@@ -24,7 +25,7 @@ func TestCompile(t *testing.T) {
 	assert.NoError(t, err)
 	expected := map[interface{}]interface{}{
 		"apiVersion": "v1",
-		"kind": "Service",
+		"kind":       "Service",
 		"metadata": map[interface{}]interface{}{
 			"name": "my-service",
 		},
@@ -35,13 +36,13 @@ func TestCompile(t *testing.T) {
 			"ports": []interface{}{
 				map[interface{}]interface{}{
 					"protocol": "TCP",
-					"port": 80,
+					"port":     80,
 				},
 			},
 		},
 	}
 
-	m, err := Compile(f)
+	m, err := Compile(f, map[string]bool{})
 	assert.NoError(t, err)
 	assert.Equal(t, expected, m)
 }
@@ -51,7 +52,7 @@ func TestCompile_WithParent(t *testing.T) {
 	f, err := ioutil.ReadFile("parent.yaml")
 	expected := map[interface{}]interface{}{
 		"apiVersion": "v1",
-		"kind": "Service",
+		"kind":       "Service",
 		"metadata": map[interface{}]interface{}{
 			"name": "my-secure-service",
 		},
@@ -62,12 +63,12 @@ func TestCompile_WithParent(t *testing.T) {
 			"ports": []interface{}{
 				map[interface{}]interface{}{
 					"protocol": "TCP",
-					"port": 8080,
+					"port":     8080,
 				},
 			},
 		},
 	}
-	m, err := Compile(f)
+	m, err := Compile(f, map[string]bool{})
 	assert.NoError(t, err)
 	assert.Equal(t, expected, m)
 }

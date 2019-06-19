@@ -71,7 +71,7 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else {
-		v, err := yt.Compile(iValue)
+		v, err := yt.Compile(iValue, map[string]bool{})
 		if err != nil {
 			return err
 		}
@@ -96,7 +96,7 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else if qry != "" {
-		documentValue, err = yt.Query(documentValue, qry)
+		documentValue, err = yt.Query(documentValue, qry, map[string]bool{})
 		if err != nil {
 			return err
 		}
