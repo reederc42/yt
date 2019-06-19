@@ -29,7 +29,7 @@ var rootCmd = &cobra.Command{
 		err := cobra.MaximumNArgs(1)(cmd, args)
 		return err
 	},
-	Version: "v0.1.0",
+	Version: "v0.0.1",
 }
 
 func init() {
