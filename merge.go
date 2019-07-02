@@ -2,7 +2,6 @@ package yt
 
 import (
 	"fmt"
-	"github.com/reederc42/yt/errors"
 	"strings"
 )
 
@@ -27,7 +26,7 @@ func orthogonalMergeHelper(l, r interface{},
 	lMap, lOk := l.(map[interface{}]interface{})
 	rMap, rOk := r.(map[interface{}]interface{})
 	if !(lOk && rOk) {
-		return nil, errors.KeyAlreadyDefined{
+		return nil, ErrKeyAlreadyDefined{
 			Key: fmt.Sprintf(".%s", strings.Join(parents, ".")),
 		}
 	}
