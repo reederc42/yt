@@ -116,7 +116,7 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		tpl, err := template.New("").Funcs(sprig.FuncMap()).Parse(string(tplRaw))
+		tpl, err := template.New("").Parse(string(tplRaw))
 		if err != nil {
 			return err
 		}

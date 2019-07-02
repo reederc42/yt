@@ -1,9 +1,9 @@
 package yt
 
 import (
-	"github.com/reederc42/yt/errors"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestOrthogonalMerge(t *testing.T) {
@@ -29,7 +29,7 @@ func TestOrthogonalMerge_KeyAlreadyDefinedError(t *testing.T) {
 	o2 := map[interface{}]interface{}{
 		"key1": "value2",
 	}
-	expected := errors.KeyAlreadyDefined{
+	expected := ErrKeyAlreadyDefined{
 		Key: ".key1",
 	}
 	_, err := OrthogonalMerge(o1, o2)
@@ -74,7 +74,7 @@ func TestOrthogonalMerge_SubDocumentKeyAlreadyDefined(t *testing.T) {
 			},
 		},
 	}
-	expected := errors.KeyAlreadyDefined{
+	expected := ErrKeyAlreadyDefined{
 		Key: ".o1.key1",
 	}
 	_, err := OrthogonalMerge(o1, o2)
@@ -86,7 +86,7 @@ func TestOrthogonalMerge_InputsNotMaps(t *testing.T) {
 	o2 := []interface{}{
 		"value1",
 	}
-	expected := errors.KeyAlreadyDefined{
+	expected := ErrKeyAlreadyDefined{
 		Key: ".",
 	}
 	_, err := OrthogonalMerge(o1, o2)

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reederc42/yt/errors"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 )
@@ -97,7 +96,7 @@ func TestLex_FileQuery(t *testing.T) {
 func TestLex_EmptyTokenError(t *testing.T) {
 	q := ".."
 	_, err := lex(q)
-	assert.Equal(t, errors.EmptyToken{}, err)
+	assert.Equal(t, ErrEmptyToken{}, err)
 }
 
 func TestExecQuery(t *testing.T) {
@@ -147,7 +146,7 @@ func TestExecQuery_NotFound(t *testing.T) {
 		},
 	}
 	_, err := execQuery(m, qe, map[string]bool{})
-	assert.Equal(t, errors.KeyNotFound{
+	assert.Equal(t, ErrKeyNotFound{
 		Key: "foo",
 	}, err)
 }
@@ -226,7 +225,7 @@ func TestDetectCycle(t *testing.T) {
 	_ = os.Chdir("testdata")
 	cycle2, err := ioutil.ReadFile("cycle1.yaml")
 	assert.NoError(t, err)
-	expectedError := errors.CycleDetected{Source: "cycle2.yaml"}
+	expectedError := ErrCycleDetected{Source: "cycle2.yaml"}
 	c := make(chan error, 1)
 	go func(input []byte) {
 		_, err := Compile(input, map[string]bool{})

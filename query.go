@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-
-	"github.com/reederc42/yt/errors"
 )
 
 const (
@@ -63,7 +61,7 @@ func lex(query string) ([]queryElement, error) {
 			case invalid:
 				state = startElement
 			case startElement:
-				return nil, errors.EmptyToken{}
+				return nil, ErrEmptyToken{}
 			case key:
 				qe = append(qe, queryElement{
 					kind: kindKey,
@@ -110,7 +108,7 @@ func lex(query string) ([]queryElement, error) {
 			case key:
 				fallthrough
 			case index:
-				return nil, errors.UnexpectedRune{
+				return nil, ErrUnexpectedRune{
 					Rune: r,
 				}
 			case file:
@@ -134,7 +132,7 @@ func lex(query string) ([]queryElement, error) {
 			case key:
 				token += string(r)
 			case index:
-				return nil, errors.UnexpectedRune{
+				return nil, ErrUnexpectedRune{
 					Rune: r,
 				}
 			case file:
@@ -146,7 +144,7 @@ func lex(query string) ([]queryElement, error) {
 	switch state {
 	case invalid:
 		if len(qe) == 0 {
-			return nil, errors.InvalidQuery{}
+			return nil, ErrInvalidQuery{}
 		}
 	case key:
 		qe = append(qe, queryElement{
@@ -192,11 +190,11 @@ func execQuery(v interface{}, query []queryElement,
 			}
 		case kindFile:
 			if _, ok := visited[qe.file]; ok {
-				return nil, errors.CycleDetected{Source: qe.file}
+				return nil, ErrCycleDetected{Source: qe.file}
 			}
 			visited[qe.file] = true
 			if i > 0 {
-				return nil, errors.InvalidQuery{}
+				return nil, ErrInvalidQuery{}
 			}
 			f, fileError := ioutil.ReadFile(qe.file)
 			if fileError != nil {
@@ -207,7 +205,7 @@ func execQuery(v interface{}, query []queryElement,
 				return nil, err
 			}
 		default:
-			return nil, errors.InvalidQuery{}
+			return nil, ErrInvalidQuery{}
 		}
 	}
 	return vPart, nil
@@ -216,11 +214,11 @@ func execQuery(v interface{}, query []queryElement,
 func getKey(key string, v interface{}) (interface{}, error) {
 	m, ok := v.(map[interface{}]interface{})
 	if !ok {
-		return nil, errors.ExpectedMap{}
+		return nil, ErrExpectedMap{}
 	}
 	value, ok := m[key]
 	if !ok {
-		return nil, errors.KeyNotFound{
+		return nil, ErrKeyNotFound{
 			Key: key,
 		}
 	}
@@ -230,10 +228,10 @@ func getKey(key string, v interface{}) (interface{}, error) {
 func getIndex(index int, v interface{}) (interface{}, error) {
 	a, ok := v.([]interface{})
 	if !ok {
-		return nil, errors.ExpectedArray{}
+		return nil, ErrExpectedArray{}
 	}
 	if index >= len(a) || index < 0 {
-		return nil, errors.OutOfBounds{}
+		return nil, ErrOutOfBounds{}
 	}
 	value := a[index]
 	return value, nil
@@ -250,21 +248,21 @@ func insertQuery(src, insert interface{}, qe []queryElement) (interface{}, error
 	case kindKey:
 		m, ok := src.(map[interface{}]interface{})
 		if !ok {
-			return nil, errors.ExpectedMap{}
+			return nil, ErrExpectedMap{}
 		}
 		m[q.key], err = insertQuery(m[q.key], insert, qe[1:])
 		return m, err
 	case kindIndex:
 		a, ok := src.([]interface{})
 		if !ok {
-			return nil, errors.ExpectedArray{}
+			return nil, ErrExpectedArray{}
 		}
 		if q.index < 0 || q.index >= len(a) {
-			return nil, errors.OutOfBounds{}
+			return nil, ErrOutOfBounds{}
 		}
 		a[q.index], err = insertQuery(a[q.index], insert, qe[1:])
 		return a, err
 	default:
-		return nil, errors.Unknown{Message: "insert query: bad kind"}
+		return nil, ErrUnknown{Message: "insert query: bad kind"}
 	}
 }
