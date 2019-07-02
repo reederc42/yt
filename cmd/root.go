@@ -116,7 +116,10 @@ func rootCmdEntry(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		tpl := template.Must(template.New("").Parse(string(tplRaw)))
+		tpl, err := template.New("").Funcs(sprig.FuncMap()).Parse(string(tplRaw))
+		if err != nil {
+			return err
+		}
 		err = yt.WriteTemplate(documentValue, tpl, o)
 	}
 	return err

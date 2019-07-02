@@ -139,17 +139,21 @@ must include a specific document.
 The octothorpe-ampersand (or pound-sand) is a valid comment in YAML 1.2. With 
 `yt`, its use is extended to mean the definition of a parent or query.
 
-## 4 Building
+## 4 Templates
 
-### 4.1 Testing
+Beyond the base go template functions, `yaml` and `indent` are defined; with these functions, until otherwise noted, components are implemented with templates.
+
+## 5 Building
+
+### 5.1 Testing
 
 From project root, run `go test ./...`
 
-### 4.2 Installation
+### 5.2 Installation
 
 `go get github.com/reederc42/yt/cmd/yt`
 
-## 5 Queries & Inserts
+## 6 Queries & Inserts
 
 The `query` option identifies an element of the provided document.
 
